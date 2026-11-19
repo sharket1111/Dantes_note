@@ -1,0 +1,49 @@
+name: build-apk
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Build APK
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+      - name: Rename APK
+        if: success()
+        run: cp app/build/outputs/apk/debug/app-debug.apk DantesNote.apk
+      - name: Publish release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: 단테의 노트 최신 빌드
+          body: "커밋 ${{ github.sha }} 에서 빌드됨. 아래 DantesNote.apk를 휴대폰에서 받아 설치하세요."
+          files: DantesNote.apk
+          make_latest: true
+      - name: Save log on failure
+        if: failure()
+        shell: bash
+        run: |
+          tail -c 80000 build.log > /tmp/build.log.txt || echo "no log" > /tmp/build.log.txt
+          git config user.name ci
+          git config user.email ci@users.noreply.github.com
+          git checkout --orphan ci-log
+          git rm -rf --quiet . || true
+          cp /tmp/build.log.txt build.log.txt
+          git add -f build.log.txt
+          git commit -m "ci log ${GITHUB_SHA}"
+          git push -f origin ci-log
