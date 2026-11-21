@@ -184,7 +184,10 @@ class OverlayService : Service() {
                     val found = sc.match(lines)
                     showPanel(sc.rank(found, Prefs.cfg(this)), lines.size)
                 }
-                .addOnFailureListener { toast("글자 인식 실패: ${it.message}") }
+                .addOnFailureListener {
+                    val m = it.message ?: ""
+                    toast(if (m.contains("download", true) || m.contains("모델")) "글자 인식 모델을 받는 중이에요. 와이파이에서 잠시 후 다시 눌러 주세요" else "글자 인식 실패: $m")
+                }
                 .addOnCompleteListener { busy = false; bubble?.text = "단테"; bmp.recycle() }
         }, delay)
     }

@@ -16,15 +16,15 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          gradle-version: '8.9'
       - name: Build APK
         shell: bash
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
       - name: Rename APK
         if: success()
-        run: cp app/build/outputs/apk/debug/app-debug.apk DantesNote.apk
+        run: cp app/build/outputs/apk/release/app-release.apk DantesNote.apk
       - name: Publish release
         if: success()
         uses: softprops/action-gh-release@v2

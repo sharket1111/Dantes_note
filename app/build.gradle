@@ -2,23 +2,40 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
+def runNo = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
 android {
     namespace 'com.dante.note'
-    compileSdk 34
+    compileSdk 35
     defaultConfig {
         applicationId "com.dante.note"
         minSdk 26
-        targetSdk 34
-        versionCode 1
-        versionName "0.1"
+        targetSdk 35
+        versionCode runNo
+        versionName "0.${runNo}"
     }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        fixed {
+            storeFile file('dante.keystore')
+            storePassword 'dantenote'
+            keyAlias 'dante'
+            keyPassword 'dantenote'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.fixed }
+        release { minifyEnabled false; signingConfig signingConfigs.fixed }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = '17' }
+    packaging { jniLibs { useLegacyPackaging = false } }
+    lint { abortOnError false; checkReleaseBuilds false }
 }
 dependencies {
-    implementation 'com.google.mlkit:text-recognition-korean:16.0.1'
+    // Play 서비스 버전: 인식 모델을 APK에 넣지 않아 용량이 작고 네이티브 라이브러리가 없음
+    implementation 'com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.1'
 }
